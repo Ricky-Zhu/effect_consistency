@@ -6,8 +6,8 @@ def get_options():
     parser = argparse.ArgumentParser()
     parser.add_argument('--log_root', default='../logs/cross_morphology_effect', type=str)
     parser.add_argument('--exp_id', default=10, type=int)
-    parser.add_argument("--env", default="UR5e-v2")
-    parser.add_argument("--target_env", default="Panda-v2")
+    parser.add_argument("--env", default="Swimmer-v2")
+    parser.add_argument("--target_env", default="Swimmer_4part-v2")
     # parser.add_argument('--data_type1', type=str, default='base', help='data type')
     # parser.add_argument('--data_type2', type=str, default='3leg', help='data type')
     parser.add_argument('--data_id1', type=str, default=str('1'), help='data id')
@@ -30,7 +30,7 @@ def get_options():
 
     parser.add_argument('--loss', default='l1', type=str)
     parser.add_argument('--istrain', default=True, type=bool)
-    parser.add_argument('--pretrain_i', default=True, type=bool)
+    parser.add_argument('--pretrain_i', default=1, type=int, help='1 -> ture, 0 -> false')
     parser.add_argument('--start_train', action='store_true')
 
     parser.add_argument('--lr_Gx', default=1e-4, type=float)
@@ -44,7 +44,7 @@ def get_options():
     parser.add_argument('--lambda_F', default=50., type=float)
     parser.add_argument('--init_start', default=True, type=bool)
     parser.add_argument('--seed', default=10, type=int)
-    parser.add_argument('--eval_type', default='robot', type=str)
+    parser.add_argument('--eval_type', default='mujoco', type=str, help="robot or mujoco")
 
     args = parser.parse_args()
 

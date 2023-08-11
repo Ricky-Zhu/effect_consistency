@@ -1,9 +1,6 @@
-from modified_envs import *
-import gym
+from options import get_options
 
-env = gym.make('Panda-v2')
-env.reset()
-for i in range(1000):
-    s, r, d, _ = env.step(env.action_space.sample())
-    if d:
-        break
+args = get_options()
+
+if args.pretrain_i:
+    print(1)

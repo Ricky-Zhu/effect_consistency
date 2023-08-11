@@ -4,7 +4,7 @@ import gym
 import sys
 from os.path import dirname, abspath
 
-sys.path.append(dirname(dirname(dirname(dirname(abspath(__file__))))))
+sys.path.append(dirname(dirname(dirname(abspath(__file__)))))
 from modified_envs import *
 import os
 import torch.nn as nn
@@ -109,6 +109,8 @@ class CrossPolicy:
         action_buffer = []
         avg_reward, new_reward = 0., 0.
         save_flag = False
+        if eval_type == 'robot':
+            err_rec = None
         if imgpath is not None:
             if not os.path.exists(imgpath):
                 os.mkdir(imgpath)
@@ -161,6 +163,9 @@ class CrossPolicy:
         # print("-----------------------------------------------")
         # print(f"Evaluation over {eval_episodes} episodes: {avg_reward:.3f}")
         # print("-----------------------------------------------")
+        if err_rec is not None:
+            print('err mean:{} err var:{} err max:{}'.format(err_rec.err_mean, err_rec.err_var,
+                                                             err_rec.err_max))
         if return_xy_pos:
             return avg_reward, (x_pos, y_pos)
         else:
