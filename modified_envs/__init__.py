@@ -25,3 +25,15 @@ register(
     entry_point='modified_envs.mujoco:create_robot_env',
     kwargs={'robot_name': 'Panda'}
 )
+
+register(
+    id='Jaco-v2',
+    entry_point='modified_envs.mujoco:create_robot_env',
+    kwargs={'robot_name': 'Jaco'}
+)
+
+register(
+    id='Kinova3-v2',
+    entry_point='modified_envs.mujoco:create_robot_env',
+    kwargs={'robot_name': 'Kinova3'}
+)

@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from modified_envs import *
 import gym
 import argparse
 import os
@@ -84,7 +85,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--policy", default="TD3")  # Policy name (TD3, DDPG or OurDDPG)
-    parser.add_argument("--env", default="Swimmer-v2")  # OpenAI gym environment name
+    parser.add_argument("--env", default="Kinova3-v2")  # OpenAI gym environment name
     parser.add_argument("--seed", default=0, type=int)  # Sets Gym, PyTorch and Numpy seeds
     parser.add_argument("--start_timesteps", default=25e3, type=int)  # Time steps initial random policy is used
     parser.add_argument("--eval_freq", default=5e3, type=int)  # How often (time steps) we evaluate
@@ -97,7 +98,7 @@ if __name__ == "__main__":
     parser.add_argument("--noise_clip", default=0.5)  # Range to clip target policy noise
     parser.add_argument("--policy_freq", default=2, type=int)  # Frequency of delayed policy updates
 
-    parser.add_argument("--log_root", default="/home/ruiqi/")
+    parser.add_argument("--log_root", default="../../logs/cross_morphology_effect/")
     parser.add_argument("--load_model", default="default")  # Model load file name, "" doesn't load, "default" uses file_name
     args = parser.parse_args()
 
