@@ -174,9 +174,9 @@ class CycleData:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='control dataset analyzer')
-    parser.add_argument("--env", default="Panda-v2")
+    parser.add_argument("--env", default="Jaco-v2")
     parser.add_argument("--force", type=bool, default=False)
-    parser.add_argument("--log_root", default="../../logs/cross_morphology_effect/data")
+    parser.add_argument("--log_root", default="../logs/cross_morphology_effect/data")
     # parser.add_argument('--data_type', type=str, default='3leg', help='data type')
     parser.add_argument('--data_id', type=int, default=1, help='data id')
     parser.add_argument('--episode_n', type=int, default=1000, help='episode number')
