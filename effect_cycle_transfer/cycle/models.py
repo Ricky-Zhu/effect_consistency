@@ -259,7 +259,7 @@ class Iengine:
 
         if self.opt.pretrain_i:
             self.imodel.load_state_dict(torch.load(weight_path))
-            print('load the pretrained inverse dynamics model in the target domain')
+            print('load the pretrained inverse dynamics model in the {} domain'.format(self.to_type))
             return None
         lr = 1e-3
         optimizer = torch.optim.Adam(self.imodel.parameters(), lr=lr)
