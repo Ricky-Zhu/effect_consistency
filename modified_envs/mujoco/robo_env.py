@@ -504,7 +504,12 @@ class ReachWrapper(Wrapper):
         self.env.render()
 
 
-def create_robot_env(robot_name=None, has_renderer=False):
+def create_robot_env(robot_name=None, gripper=False, has_renderer=True):
+    if gripper:
+        gripper = 'default'
+    else:
+        gripper = None
     return ReachWrapper(
-        Reach(robots=robot_name, has_renderer=has_renderer, has_offscreen_renderer=False, use_camera_obs=False,
+        Reach(robots=robot_name, gripper_types=gripper, has_renderer=has_renderer, has_offscreen_renderer=False,
+              use_camera_obs=False,
               horizon=200, reward_shaping=True))

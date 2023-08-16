@@ -17,13 +17,13 @@ register(
 register(
     id='UR5e-v2',
     entry_point='modified_envs.mujoco:create_robot_env',
-    kwargs={'robot_name': 'UR5e'}
+    kwargs={'robot_name': 'UR5e', 'gripper': True}
 )
 
 register(
     id='Panda-v2',
     entry_point='modified_envs.mujoco:create_robot_env',
-    kwargs={'robot_name': 'Panda'}
+    kwargs={'robot_name': 'Panda', 'gripper': True}
 )
 
 register(

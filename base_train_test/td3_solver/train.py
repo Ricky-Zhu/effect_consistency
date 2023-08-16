@@ -8,7 +8,8 @@ import utils
 import TD3
 import sys
 from os.path import dirname, abspath
-sys.path.append(dirname(dirname(dirname(dirname(abspath(__file__))))))
+
+sys.path.append(dirname(dirname(dirname(abspath(__file__)))))
 from modified_envs import *
 
 
@@ -46,7 +47,10 @@ def main(args):
     print(f"Policy: {args.policy}, Env: {args.env}, Seed: {args.seed}")
     print("---------------------------------------")
 
-    log_path = safe_path(os.path.join(args.log_root, '{}_base'.format(args.env)))
+    if args.optimal:
+        log_path = safe_path(os.path.join(args.log_root, '{}_optimal_base'.format(args.env)))
+    else:
+        log_path = safe_path(os.path.join(args.log_root, '{}_base'.format(args.env)))
     result_path = safe_path(os.path.join(log_path, 'results'))
     model_path = safe_path(os.path.join(log_path, 'models'))
 
@@ -137,7 +141,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--policy", default="TD3")  # Policy name (TD3, DDPG or OurDDPG)
-    parser.add_argument("--env", default="Swimmer_4part-v2")  # OpenAI gym environment name
+    parser.add_argument("--env", default="Swimmer-v2")  # OpenAI gym environment name
     parser.add_argument("--seed", default=0, type=int)  # Sets Gym, PyTorch and Numpy seeds
     parser.add_argument("--start_timesteps", default=25e3, type=int)  # Time steps initial random policy is used
     parser.add_argument("--eval_freq", default=1e4, type=int)  # How often (time steps) we evaluate
@@ -151,6 +155,8 @@ if __name__ == "__main__":
     parser.add_argument("--policy_freq", default=2, type=int)  # Frequency of delayed policy updates
     parser.add_argument("--save_model", default=True)  # Save model and optimizer parameters
     parser.add_argument("--load_model", default="")  # Model load file name, "" doesn't load, "default" uses file_name
+
+    parser.add_argument("--optimal", action='store_false')
 
     parser.add_argument("--log_root", default="../../logs/cross_morphology_effect")
     args = parser.parse_args()

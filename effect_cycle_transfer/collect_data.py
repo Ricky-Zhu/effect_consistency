@@ -1,7 +1,6 @@
 import sys
 from os.path import dirname, abspath
-
-sys.path.append(dirname(dirname(dirname(abspath(__file__)))))
+sys.path.append(dirname(dirname(abspath(__file__))))
 from modified_envs import *
 import os
 import gym

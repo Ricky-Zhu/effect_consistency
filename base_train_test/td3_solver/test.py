@@ -1,5 +1,8 @@
 import numpy as np
 import torch
+import sys
+from os.path import dirname, abspath
+sys.path.append(dirname(dirname(dirname(abspath(__file__)))))
 from modified_envs import *
 import gym
 import argparse
@@ -9,10 +12,12 @@ import random
 import utils
 import TD3
 
+
 def safe_path(path):
     if not os.path.exists(path):
         os.mkdir(path)
     return path
+
 
 # Runs policy for X episodes and returns average reward
 # A fixed seed is used for the eval environment
@@ -43,7 +48,11 @@ def eval(args):
     print(f"Policy: {args.policy}, Env: {args.env}, Seed: {args.seed}")
     print("---------------------------------------")
 
-    log_path = safe_path(os.path.join(args.log_root, '{}_base'.format(args.env)))
+    if args.optimal:
+        log_path = safe_path(os.path.join(args.log_root, '{}_optimal_base'.format(args.env)))
+    else:
+        log_path = safe_path(os.path.join(args.log_root, '{}_base'.format(args.env)))
+
     model_path = safe_path(os.path.join(log_path, 'models'))
 
     env = gym.make(args.env)
@@ -75,17 +84,16 @@ def eval(args):
 
     if args.load_model != "":
         policy_file = file_name if args.load_model == "default" else args.load_model
-        policy.load(os.path.join(model_path,'{}'.format(policy_file)))
+        policy.load(os.path.join(model_path, '{}'.format(policy_file)))
 
     # Evaluate untrained policy
     eval_policy(policy, args.env, args.seed)
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--policy", default="TD3")  # Policy name (TD3, DDPG or OurDDPG)
-    parser.add_argument("--env", default="Kinova3-v2")  # OpenAI gym environment name
+    parser.add_argument("--env", default="UR5e-v2")  # OpenAI gym environment name
     parser.add_argument("--seed", default=0, type=int)  # Sets Gym, PyTorch and Numpy seeds
     parser.add_argument("--start_timesteps", default=25e3, type=int)  # Time steps initial random policy is used
     parser.add_argument("--eval_freq", default=5e3, type=int)  # How often (time steps) we evaluate
@@ -97,9 +105,11 @@ if __name__ == "__main__":
     parser.add_argument("--policy_noise", default=0.2)  # Noise added to target policy during critic update
     parser.add_argument("--noise_clip", default=0.5)  # Range to clip target policy noise
     parser.add_argument("--policy_freq", default=2, type=int)  # Frequency of delayed policy updates
+    parser.add_argument("--optimal", action='store_true')
 
     parser.add_argument("--log_root", default="../../logs/cross_morphology_effect/")
-    parser.add_argument("--load_model", default="default")  # Model load file name, "" doesn't load, "default" uses file_name
+    parser.add_argument("--load_model",
+                        default="default")  # Model load file name, "" doesn't load, "default" uses file_name
     args = parser.parse_args()
 
     eval(args)

@@ -205,6 +205,12 @@ if __name__ == '__main__':
         args.pretrain_i = True
     else:
         args.pretrain_i = False
+
+    if args.init_start == 1:
+        args.init_start = True
+    else:
+        args.init_start = False
+
     setup_seed(args.seed)
 
     # source env information

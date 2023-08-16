@@ -80,8 +80,13 @@ class CrossPolicy:
     def __init__(self, opt):
         self.opt = opt
         self.env_name = opt.target_env
-        self.policy_path = os.path.join(opt.log_root,
-                                        '{}_base/models/TD3_{}_0_actor'.format(opt.env, opt.env))
+        if opt.optimal:
+            self.policy_path = os.path.join(opt.log_root,
+                                            '{}_optimal_base/models/TD3_{}_0_actor'.format(opt.env, opt.env))
+
+        else:
+            self.policy_path = os.path.join(opt.log_root,
+                                            '{}_base/models/TD3_{}_0_actor'.format(opt.env, opt.env))
         self.state_dim = opt.state_dim1
         self.action_dim = opt.action_dim1
         self.max_action = 1
