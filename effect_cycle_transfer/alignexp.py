@@ -59,7 +59,7 @@ def train(args):
     print('evaluate the initial transferred policy in the target domain reward: {}'.format(init_rew))
     best_reward = 0
 
-    for iteration in range(1, 4):
+    for iteration in range(1, args.iteration + 1):
         print('iteration {}'.format(iteration))
 
         args.lr_Gx = 1e-4

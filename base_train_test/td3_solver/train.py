@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import gym
 import argparse
+import random
 import os
 from termcolor import cprint
 import utils
@@ -58,8 +59,12 @@ def main(args):
 
     # Set seeds
     env.seed(args.seed)
+    env.action_space.seed(args.seed)
     torch.manual_seed(args.seed)
+    torch.cuda.manual_seed_all(args.seed)
     np.random.seed(args.seed)
+    random.seed(args.seed)
+    torch.backends.cudnn.deterministic = True
 
     state_dim = env.observation_space.shape[0]
     action_dim = env.action_space.shape[0]

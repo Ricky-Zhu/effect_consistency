@@ -44,6 +44,7 @@ def get_options():
     parser.add_argument('--lambda_F', default=50., type=float)
     parser.add_argument('--init_start', default=1, type=int, help='1 -> ture, 0 -> false')
     parser.add_argument('--seed', default=10, type=int)
+    parser.add_argument('--iteration', default=3, type=int)
     parser.add_argument('--eval_type', default='mujoco', type=str, help="robot or mujoco")
     parser.add_argument("--optimal", action='store_true', help='whether the source policy is optimal')
 

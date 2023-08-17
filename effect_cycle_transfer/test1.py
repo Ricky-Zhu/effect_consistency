@@ -1,7 +1,4 @@
-import torch
-
-a = torch.rand([128, 1], dtype=torch.float32)
-b = torch.rand([128, 1], dtype=torch.float32)
-h = torch.rand([128, 1], dtype=torch.float32)
-c = 0.95
-d = h + c * a * b
+import gym
+env= gym.make('Ant-v2')
+env.action_space.seed(1)
+print(env.action_space.sample()[:5])
