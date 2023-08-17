@@ -23,13 +23,12 @@ def setup_seed(seed):
     torch.backends.cudnn.deterministic = True
 
 
-def setup_wandb(args):
-    current_date = datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
+def setup_wandb(args, current_time):
     wandb.login()
     wandb.init(
         project="cdat_det_{}_{}".format(args.env, args.target_env),
         config=vars(args),
-        name="cdat_{}".format(current_date)
+        name="cdat_{}".format(current_time)
     )
 
 
@@ -41,9 +40,11 @@ def add_errors(model, display):
 
 
 def train(args):
+    current_time = datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
     if args.start_train:
-        setup_wandb(args)
-    txt_logs, txt_eval_logs, training_args_logs, img_logs, weight_logs, log_dirs = init_logs(args)
+        setup_wandb(args,current_time)
+    txt_logs, txt_eval_logs, training_args_logs, img_logs, weight_logs, log_dirs = init_logs(args,current_time)
+
     data_agent = CycleData(args)  # normalize and initial the pre-collected source and target domain data
     model = CycleGANModel(args)  # initialize all the needed networks
     model.iengine.train_statef(data_agent.data2)  # train the target inverse dynamics

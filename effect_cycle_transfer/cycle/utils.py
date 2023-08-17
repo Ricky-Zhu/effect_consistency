@@ -19,8 +19,7 @@ def safe_path(path):
     return path
 
 
-def init_logs(opt):
-    current_time = datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
+def init_logs(opt, current_time):
     log_dir = safe_path(os.path.join(opt.log_root, '{}_{}'.format(opt.env, opt.target_env),
                                      'exp_{}'.format(current_time)))
     txt_eval_logs = None
