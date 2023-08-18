@@ -66,6 +66,26 @@ class TD3(object):
             return state, action
         return action
 
+    def select_cross_action_reverse(self, state, gxmodel, axmodel, return_tran_state=False):
+        state = torch.tensor(state).float().cuda()
+        state = (state - self.mean2) / self.std2
+
+        # state = gxmodel(state.unsqueeze(0))
+        tmp = gxmodel(state[:self.opt.state_dim1].unsqueeze(0))
+        state = self.mean1.clone()
+        state[:self.opt.state_dim2] = tmp
+
+        state_temp = state.clone().detach()
+        state = state * self.std1 + self.mean1
+        state = state.cpu().data.numpy()
+        action = self.select_action(state)
+        action = axmodel(torch.tensor(state_temp).float().cuda(),
+                         torch.tensor(action).float().cuda().unsqueeze(0))
+        action = action.cpu().data.numpy()
+        if return_tran_state:
+            return state, action
+        return action
+
     def get_mean_std(self, prefix, data_id):
         data_path = os.path.join(prefix, '{}'.format(data_id))
         mean_std_path = os.path.join(data_path, 'now_state.npy')
@@ -98,18 +118,47 @@ class CrossPolicy:
         self.env = gym.make(self.env_name)
         self.env.seed(opt.seed)
 
-    def eval_policy(self,
-                    gxmodel=None,
-                    axmodel=None,
-                    imgpath=None,
-                    eval_episodes=10,
-                    return_xy_pos=False,
-                    err_rec=None,
-                    eval_type='mujoco'):
+    def eval_policy_reverse(self,
+                            gxmodel=None,
+                            axmodel=None,
+                            imgpath=None,
+                            eval_episodes=10,
+                            return_xy_pos=False,
+                            err_rec=None,
+                            eval_type='mujoco',
+                            return_error_mean=False,
+                            target_policy_path=None):
+        '''
+        evaluate the learned mapping for target to source
+        Args:
+            gxmodel:
+            axmodel:
+            imgpath:
+            eval_episodes:
+            return_xy_pos:
+            err_rec:
+            eval_type:
+            return_error_mean:
+
+        Returns:
+
+        '''
+        # load oracle target policy
+        from copy import copy
+        temp_opt = copy(self.opt)
+        temp_opt.env = self.opt.target_env
+        temp_opt.target_env = self.opt.env
+
+        policy = TD3(target_policy_path,
+                     temp_opt.state_dim2,
+                     temp_opt.action_dim2,
+                     self.max_action,
+                     temp_opt)
         x_pos = []
         y_pos = []
+        error_mean = []
         success_count = 0
-        eval_env = self.env
+        eval_env = gym.make(temp_opt.target_env)
         state_buffer = []
         action_buffer = []
         avg_reward, new_reward = 0., 0.
@@ -122,6 +171,9 @@ class CrossPolicy:
             save_flag = True
 
         for i in tqdm(range(eval_episodes)):
+            if err_rec is not None:
+                err_rec.reset()
+            err_mean_per = []
             state, done = eval_env.reset(), False
             if return_xy_pos:
                 x_pos.append(eval_env.sim.data.qpos[0])
@@ -134,9 +186,11 @@ class CrossPolicy:
             while not done:
                 state = np.array(state)
 
-                trans_state, action = self.policy.select_cross_action(state, gxmodel, axmodel, return_tran_state=True)
+                trans_state, action = policy.select_cross_action_reverse(state, gxmodel, axmodel,
+                                                                         return_tran_state=True)
                 if err_rec is not None:
                     err_rec(state, trans_state)
+                    err_mean_per.append(err_rec.err_mean)
                 state_buffer.append(state)
                 action_buffer.append(action)
                 state, reward, done, info = eval_env.step(action)
@@ -159,6 +213,7 @@ class CrossPolicy:
                     img = eval_env.sim.render(mode='offscreen', camera_name='track', width=256, height=256)
                     Image.fromarray(img[::-1, :, :]).save(os.path.join(episode_path, 'img_{}.jpg'.format(count)))
                 count += 1
+            error_mean.append(err_mean_per)
         avg_reward /= eval_episodes
 
         if eval_type == 'robot':
@@ -173,5 +228,94 @@ class CrossPolicy:
                                                              err_rec.err_max))
         if return_xy_pos:
             return avg_reward, (x_pos, y_pos)
+        elif return_error_mean:
+            return avg_reward, error_mean
+        else:
+            return avg_reward
+
+    def eval_policy(self,
+                    gxmodel=None,
+                    axmodel=None,
+                    imgpath=None,
+                    eval_episodes=10,
+                    return_xy_pos=False,
+                    err_rec=None,
+                    eval_type='mujoco',
+                    return_error_mean=False):
+        x_pos = []
+        y_pos = []
+        error_mean = []
+        success_count = 0
+        eval_env = self.env
+        state_buffer = []
+        action_buffer = []
+        avg_reward, new_reward = 0., 0.
+        save_flag = False
+        if eval_type == 'robot':
+            err_rec = None
+        if imgpath is not None:
+            if not os.path.exists(imgpath):
+                os.mkdir(imgpath)
+            save_flag = True
+
+        for i in tqdm(range(eval_episodes)):
+            if err_rec is not None:
+                err_rec.reset()
+            err_mean_per = []
+            state, done = eval_env.reset(), False
+            if return_xy_pos:
+                x_pos.append(eval_env.sim.data.qpos[0])
+                y_pos.append(eval_env.sim.data.qpos[1])
+            if save_flag:
+                episode_path = os.path.join(imgpath, 'episode_{}'.format(i))
+                if not os.path.exists(episode_path):
+                    os.mkdir(episode_path)
+            count = 0
+            while not done:
+                state = np.array(state)
+
+                trans_state, action = self.policy.select_cross_action(state, gxmodel, axmodel, return_tran_state=True)
+                if err_rec is not None:
+                    err_rec(state, trans_state)
+                    err_mean_per.append(err_rec.err_mean)
+                state_buffer.append(state)
+                action_buffer.append(action)
+                state, reward, done, info = eval_env.step(action)
+                if eval_type == 'robot':
+                    if info['success']:
+                        success_count += 1
+
+                avg_reward += reward
+                if return_xy_pos:
+                    x_pos.append(eval_env.sim.data.qpos[0])
+                    y_pos.append(eval_env.sim.data.qpos[1])
+                # if self.env_name=='HalfCheetah-v2':
+                #     avg_reward += info['reward_run']
+                # elif self.env_name=='Swimmer-v2':
+                #     avg_reward += info['reward_fwd']
+                # elif self.env_name=='Ant-v2':
+                #     avg_reward += info['reward_forward']
+
+                if save_flag:
+                    img = eval_env.sim.render(mode='offscreen', camera_name='track', width=256, height=256)
+                    Image.fromarray(img[::-1, :, :]).save(os.path.join(episode_path, 'img_{}.jpg'.format(count)))
+                count += 1
+            error_mean.append(err_mean_per)
+        avg_reward /= eval_episodes
+
+        if eval_type == 'robot':
+            if success_count != 0:
+                print('success rate {}'.format(success_count / float(eval_episodes)))
+
+        # print("-----------------------------------------------")
+        # print(f"Evaluation over {eval_episodes} episodes: {avg_reward:.3f}")
+        # print("-----------------------------------------------")
+        if err_rec is not None:
+            print('err mean:{} err var:{} err max:{}'.format(err_rec.err_mean, err_rec.err_var,
+                                                             err_rec.err_max))
+        if return_xy_pos:
+            return avg_reward, (x_pos, y_pos)
+        elif return_error_mean:
+            return avg_reward, error_mean
         else:
             return avg_reward
