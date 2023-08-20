@@ -119,6 +119,12 @@ class AGmodel(nn.Module):
                 new_action = torch.cat((action[:, :3], action[:, :3], action[:, 3:6]), 1)
             else:
                 new_action = torch.cat((action[:, :3], action[:, 6:9]), 1)
+
+        elif self.env == "Ant-v2":
+            if self.dir == '1to2':
+                new_action = torch.cat((action[:, :6], action[:, 4:6], action[:, 6:]), 1)
+            else:
+                new_action = torch.cat((action[:, :6], action[:, 8:]), 1)
         else:
             new_action = action
         return new_action

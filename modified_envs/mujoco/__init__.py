@@ -1,3 +1,4 @@
 from modified_envs.mujoco.half_cheetah import HalfCheetahModifiedEnv
 from modified_envs.mujoco.swimmer import SwimmerModifiedEnv
+from modified_envs.mujoco.ant import AntModifiedEnv
 from modified_envs.mujoco.robo_env import create_robot_env

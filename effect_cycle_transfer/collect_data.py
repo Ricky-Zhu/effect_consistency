@@ -173,7 +173,7 @@ class CycleData:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='control dataset analyzer')
-    parser.add_argument("--env", default="Jaco-v2")
+    parser.add_argument("--env", default="Ant-v2")
     parser.add_argument("--force", type=bool, default=False)
     parser.add_argument("--log_root", default="../logs/cross_morphology_effect/data")
     # parser.add_argument('--data_type', type=str, default='3leg', help='data type')
