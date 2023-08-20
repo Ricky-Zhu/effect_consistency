@@ -103,7 +103,10 @@ class AGmodel(nn.Module):
             else:
                 new_action = action[:, :2]
         elif self.env == 'Swimmer_4part-v2':
-            new_action = action[:, :2]
+            if self.dir == '2to1':
+                new_action = torch.cat((action, action[:, 0:1]), 1)
+            else:
+                new_action = action[:, :2]
         elif self.env == 'HalfCheetah-v2':
             # 3leg -> 4leg: 0 1 2 3 4 5 => 0 1 2 0 1 2 3 4 5
             # 4leg -> 3leg: 0 1 2 3 4 5 6 7 8 => 0 1 2 6 7 8
@@ -112,7 +115,10 @@ class AGmodel(nn.Module):
             else:
                 new_action = torch.cat((action[:, :3], action[:, 6:9]), 1)
         elif self.env == 'HalfCheetah_3leg-v2':
-            new_action = torch.cat((action[:, :3], action[:, 6:9]), 1)
+            if self.dir == '2to1':
+                new_action = torch.cat((action[:, :3], action[:, :3], action[:, 3:6]), 1)
+            else:
+                new_action = torch.cat((action[:, :3], action[:, 6:9]), 1)
         else:
             new_action = action
         return new_action
