@@ -30,7 +30,7 @@ def get_options():
 
     parser.add_argument('--loss', default='l1', type=str)
     parser.add_argument('--istrain', default=True, type=bool)
-    parser.add_argument('--pretrain_i', default=1, type=int, help='1 -> ture, 0 -> false')
+    parser.add_argument('--pretrain_i', default=0, type=int, help='1 -> ture, 0 -> false')
     parser.add_argument('--start_train', action='store_true')
 
     parser.add_argument('--lr_Gx', default=1e-4, type=float)
