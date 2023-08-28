@@ -26,6 +26,31 @@ def setup_seed(seed):
     torch.backends.cudnn.deterministic = True
 
 
+def fetch_transformed_traj(model_path, args):
+    '''
+    fetch the target traj and the transformed traj
+    Args:
+        model_path:
+        args:
+
+    Returns:
+
+    '''
+    model = CycleGANModel(args)
+    model.load(model_path)
+    setup_seed(10)
+    target_state, source_state = model.cross_policy.eval_policy(
+        gxmodel=model.netG_2to1,
+        axmodel=model.net_action_G_1to2,
+        eval_episodes=1,
+        eval_type=args.eval_type,
+        return_trans_state=True)
+    target_state = np.asarray(target_state)
+    source_state = np.asarray(source_state)
+    np.save("/home/ruiqi/projects/effect_consistency/results_analysis/ours_t2s_source_states_train.npy", source_state)
+    np.save("/home/ruiqi/projects/effect_consistency/results_analysis/t2s_target_states_train.npy", target_state)
+
+
 def evaluate_mapping_error(model_path, args):
     model = CycleGANModel(args)
     model.load(model_path)
@@ -42,15 +67,16 @@ def evaluate_mapping_error(model_path, args):
         err_rec=xy_err_rec,
         return_error_mean=True)
     print(rewards)
+
     # evaluate reverse
-    rewards, error_mean = model.cross_policy.eval_policy_reverse(
-        gxmodel=model.netG_1to2,
-        axmodel=model.net_action_G_2to1,
-        eval_episodes=args.eval_n,
-        eval_type=args.eval_type,
-        err_rec=xy_err_rec,
-        return_error_mean=True,
-        target_policy_path='/home/ruiqi/projects/effect_consistency/logs/cross_morphology_effect/HalfCheetah_3leg-v2_base/models/TD3_HalfCheetah_3leg-v2_0_actor')
+    # rewards, error_mean = model.cross_policy.eval_policy_reverse(
+    #     gxmodel=model.netG_1to2,
+    #     axmodel=model.net_action_G_2to1,
+    #     eval_episodes=args.eval_n,
+    #     eval_type=args.eval_type,
+    #     err_rec=xy_err_rec,
+    #     return_error_mean=True,
+    #     target_policy_path='/home/ruiqi/projects/effect_consistency/logs/cross_morphology_effect/HalfCheetah_3leg-v2_base/models/TD3_HalfCheetah_3leg-v2_0_actor')
 
     # fw = open('/home/ruiqi/projects/effect_consistency/results_analysis/ours_xy_err_analysis.txt', 'wb')
     # pickle.dump(error_mean,fw)
@@ -62,7 +88,7 @@ def evaluate_mapping_error(model_path, args):
     #     temp_error_mean = np.asarray(error_mean[i])
     #     axs[i].plot(x_cor, temp_error_mean)
     # plt.show()
-    print(rewards)
+
     # return rewards
     # return error_mean
 
@@ -72,7 +98,7 @@ if __name__ == "__main__":
     args = get_options()
     args.env = 'HalfCheetah-v2'
     args.target_env = 'HalfCheetah_3leg-v2'
-    args.eval_n = 1
+    args.eval_n = 2
     args.init_start = False
     # source env information
     env_name = args.env
@@ -88,11 +114,10 @@ if __name__ == "__main__":
     args.action_dim2 = env.action_space.shape[0]
     env.close()
 
-    eval_rew = []
-    for seed in [10]:
-        args.seed = seed
-        setup_seed(args.seed)
-        rew = evaluate_mapping_error(model_path, args)
-        eval_rew.append(rew)
-    eval_rew = np.asarray(eval_rew)
-    print(eval_rew.mean(), eval_rew.std())
+    fetch_transformed_traj(model_path, args)
+
+    # eval_rew = []
+    # for seed in [8, 10]:
+    #     args.seed = seed
+    #     setup_seed(args.seed)
+    #     evaluate_mapping_error(model_path, args)

@@ -1,2 +1,2 @@
-python alignexp.py --env HalfCheetah_3leg-v2 --target_env HalfCheetah-v2 --iteration 3 \
---pair_n 7000 --display_gap 1000 --eval_gap 1000 --eval_n 10 --pretrain_i 1 --init_start 1 --start_train --seed $1
+python alignexp.py --env HalfCheetah_3leg-v2 --target_env HalfCheetah-v2 --iteration 3 --data_id1 5 --data_id2 5 \
+--pair_n 7000 --display_gap 1000 --eval_gap 1000 --eval_n 10 --pretrain_i 0 --init_start 1 --start_train --seed $1

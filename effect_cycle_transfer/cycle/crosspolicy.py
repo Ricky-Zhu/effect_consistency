@@ -241,13 +241,15 @@ class CrossPolicy:
                     return_xy_pos=False,
                     err_rec=None,
                     eval_type='mujoco',
-                    return_error_mean=False):
+                    return_error_mean=False,
+                    return_trans_state=False):
         x_pos = []
         y_pos = []
         error_mean = []
         success_count = 0
         eval_env = self.env
         state_buffer = []
+        trans_state_buffer = []
         action_buffer = []
         avg_reward, new_reward = 0., 0.
         save_flag = False
@@ -275,6 +277,8 @@ class CrossPolicy:
                 state = np.array(state)
 
                 trans_state, action = self.policy.select_cross_action(state, gxmodel, axmodel, return_tran_state=True)
+                if return_trans_state:
+                    trans_state_buffer.append(trans_state)
                 if err_rec is not None:
                     err_rec(state, trans_state)
                     err_mean_per.append(err_rec.err_mean)
@@ -313,6 +317,9 @@ class CrossPolicy:
         if err_rec is not None:
             print('err mean:{} err var:{} err max:{}'.format(err_rec.err_mean, err_rec.err_var,
                                                              err_rec.err_max))
+
+        if return_trans_state:
+            return state_buffer, trans_state_buffer
         if return_xy_pos:
             return avg_reward, (x_pos, y_pos)
         elif return_error_mean:
