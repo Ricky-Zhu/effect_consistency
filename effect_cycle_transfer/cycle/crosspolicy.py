@@ -242,7 +242,8 @@ class CrossPolicy:
                     err_rec=None,
                     eval_type='mujoco',
                     return_error_mean=False,
-                    return_trans_state=False):
+                    return_trans_state=False,
+                    render=False):
         x_pos = []
         y_pos = []
         error_mean = []
@@ -275,7 +276,8 @@ class CrossPolicy:
             count = 0
             while not done:
                 state = np.array(state)
-
+                if render:
+                    eval_env.render()
                 trans_state, action = self.policy.select_cross_action(state, gxmodel, axmodel, return_tran_state=True)
                 if return_trans_state:
                     trans_state_buffer.append(trans_state)

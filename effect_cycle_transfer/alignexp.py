@@ -47,157 +47,163 @@ def train(args):
 
     data_agent = CycleData(args)  # normalize and initial the pre-collected source and target domain data
     model = CycleGANModel(args)  # initialize all the needed networks
+
     model.iengine.train_statef(data_agent.data2)  # train the target inverse dynamics
     model.iengine_1.train_statef(data_agent.data1)  # train the source inverse dynamics
 
-    xy_err_rec = error_rec(x_arg=0, y_arg=1)
+    if not args.pretrain_i:
+        print('finish pretraining the inverse dynamics models!')
 
-    init_rew = model.cross_policy.eval_policy(
-        gxmodel=model.netG_2to1,
-        axmodel=model.net_action_G_1to2,
-        eval_episodes=args.eval_n,
-        eval_type=args.eval_type)
-    print('evaluate the initial transferred policy in the target domain reward: {}'.format(init_rew))
-    best_reward = 0
+    else:
+        print('start training the correspondence!')
+        xy_err_rec = error_rec(x_arg=0, y_arg=1)
 
-    for iteration in range(1, args.iteration + 1):
-        print('iteration {}'.format(iteration))
-
-        args.lr_Gx = 1e-4
-        args.lr_Ax = 1e-4
-        model.update(args)
-        end_id = 0
-        start_id = end_id
-        end_id = start_id + args.pair_n
-
-        for batch_id in range(start_id, end_id):
-            item = data_agent.sample()
-            data1, data2 = item
-            model.set_input(item)
-            model.optimize_parameters()
-            # real, fake = model.fetch()
-
-            if (batch_id + 1) % args.display_gap == 0:
-                display = '\n===> iteration {} \t Batch[{}/{}]'.format(iteration, batch_id + 1, args.pair_n)
-                print(display)
-                # wandb log the loss
-                new_loss_dict = {}
-                errs = model.get_current_errors()
-                for k, v in errs.items():
-                    k_ = 'iter_{}/g/{}'.format(iteration, k)
-                    new_loss_dict[k_] = v
-                if args.start_train:
-                    wandb.log(new_loss_dict)
-
-                model.visual()
-
-            if (batch_id + 1) % args.eval_gap == 0:
-                reward = model.cross_policy.eval_policy(
-                    gxmodel=model.netG_2to1,
-                    axmodel=model.net_action_G_1to2,
-                    eval_episodes=args.eval_n,
-                    err_rec=xy_err_rec,
-                    eval_type=args.eval_type)
-
-                if reward > best_reward:
-                    best_reward = reward
-                    model.save(weight_logs)
-                    # save the x y pos
-                    if args.eval_type == "mujoco":
-                        _, xy_pos = model.cross_policy.eval_policy(
-                            gxmodel=model.netG_2to1,
-                            axmodel=model.net_action_G_1to2,
-                            eval_episodes=1,
-                            return_xy_pos=True)
-                        f = open(log_dirs + '/xy_pos_best.txt', 'wb')
-                        pickle.dump(xy_pos, f)
-                        f.close()
-                if args.start_train:
-                    wandb.log({'iter_{}/g/eval'.format(iteration): reward})
-                    wandb.log({'best_reward': best_reward})
-                    if args.eval_type == 'mujoco':
-                        wandb.log({'iter_{}/g/err_mean'.format(iteration): xy_err_rec.err_mean,
-                                   'iter_{}/g/err_var'.format(iteration): xy_err_rec.err_var,
-                                   'iter_{}/g/err_max'.format(iteration): xy_err_rec.err_max}
-                                  )
-                xy_err_rec.reset()
-                eval_display = '\n G part iteration {} best_reward:{:.1f}  cur_reward:{:.1f}'.format(iteration,
-                                                                                                     best_reward,
-                                                                                                     reward)
-                print(eval_display)
-
-        args.init_start = False
-        args.lr_Gx = 1e-4
-        args.lr_Ax = 1e-4
-        model.update(args)
-        end_id = 0
-        start_id = end_id
-        end_id = start_id + args.pair_n
-        print('update A phase')
-        for batch_id in range(start_id, end_id):
-            item = data_agent.sample()
-            data1, data2 = item
-            model.set_input(item)
-            model.optimize_parameters()
-            # real, fake = model.fetch()
-
-            if (batch_id + 1) % args.display_gap == 0:
-                display = '\n===> Batch[{}/{}]'.format(batch_id + 1, args.pair_n)
-                print(display)
-                # wandb log the loss
-                new_loss_dict = {}
-                errs = model.get_current_errors()
-                for k, v in errs.items():
-                    k_ = 'iter_{}/a/{}'.format(iteration, k)
-                    new_loss_dict[k_] = v
-                if args.start_train:
-                    wandb.log(new_loss_dict)
-
-                model.visual()
-
-            if (batch_id + 1) % args.eval_gap == 0:
-                reward = model.cross_policy.eval_policy(
-                    gxmodel=model.netG_2to1,
-                    axmodel=model.net_action_G_1to2,
-                    eval_episodes=args.eval_n,
-                    err_rec=xy_err_rec)
-                if reward > best_reward:
-                    best_reward = reward
-                    model.save(weight_logs)
-                    if args.eval_type == 'mujoco':
-                        _, xy_pos = model.cross_policy.eval_policy(
-                            gxmodel=model.netG_2to1,
-                            axmodel=model.net_action_G_1to2,
-                            eval_episodes=1,
-                            return_xy_pos=True,
-                        )
-                        f = open(log_dirs + '/xy_pos_best.txt', 'wb')
-                        pickle.dump(xy_pos, f)
-                        f.close()
-
-                if args.start_train:
-                    wandb.log({'iter_{}/a/eval'.format(iteration): reward})
-                    wandb.log({'best_reward': best_reward})
-                    if args.eval_type == 'mujoco':
-                        wandb.log({'iter_{}/a/err_mean'.format(iteration): xy_err_rec.err_mean,
-                                   'iter_{}/a/err_var'.format(iteration): xy_err_rec.err_var,
-                                   'iter_{}/a/err_max'.format(iteration): xy_err_rec.err_max}
-                                  )
-
-                xy_err_rec.reset()
-                eval_display = '\nA part iteration {} best_reward:{:.1f}  cur_reward:{:.1f}'.format(iteration,
-                                                                                                    best_reward,
-                                                                                                    reward)
-                print(eval_display)
-    if args.eval_type == 'mujoco':
-        _, xy_pos = model.cross_policy.eval_policy(
+        init_rew = model.cross_policy.eval_policy(
             gxmodel=model.netG_2to1,
             axmodel=model.net_action_G_1to2,
-            eval_episodes=1,
-            return_xy_pos=True)
-        f = open(log_dirs + '/xy_pos_final.txt', 'wb')
-        pickle.dump(xy_pos, f)
-        f.close()
+            eval_episodes=args.eval_n,
+            eval_type=args.eval_type)
+        print('evaluate the initial transferred policy in the target domain reward: {}'.format(init_rew))
+        best_reward = 0
+
+        for iteration in range(1, args.iteration + 1):
+            print('iteration {}'.format(iteration))
+
+            args.lr_Gx = 1e-4
+            args.lr_Ax = 1e-4
+            model.update(args)
+            end_id = 0
+            start_id = end_id
+            end_id = start_id + args.pair_n
+
+            for batch_id in range(start_id, end_id):
+                item = data_agent.sample()
+                data1, data2 = item
+                model.set_input(item)
+                model.optimize_parameters()
+                # real, fake = model.fetch()
+
+                if (batch_id + 1) % args.display_gap == 0:
+                    display = '\n===> iteration {} \t Batch[{}/{}]'.format(iteration, batch_id + 1, args.pair_n)
+                    print(display)
+                    # wandb log the loss
+                    new_loss_dict = {}
+                    errs = model.get_current_errors()
+                    for k, v in errs.items():
+                        k_ = 'iter_{}/g/{}'.format(iteration, k)
+                        new_loss_dict[k_] = v
+                    if args.start_train:
+                        wandb.log(new_loss_dict)
+
+                    model.visual()
+
+                if (batch_id + 1) % args.eval_gap == 0:
+                    reward = model.cross_policy.eval_policy(
+                        gxmodel=model.netG_2to1,
+                        axmodel=model.net_action_G_1to2,
+                        eval_episodes=args.eval_n,
+                        err_rec=xy_err_rec,
+                        eval_type=args.eval_type)
+
+                    if reward > best_reward:
+                        best_reward = reward
+                        model.save(weight_logs)
+                        # save the x y pos
+                        if args.eval_type == "mujoco":
+                            _, xy_pos = model.cross_policy.eval_policy(
+                                gxmodel=model.netG_2to1,
+                                axmodel=model.net_action_G_1to2,
+                                eval_episodes=1,
+                                return_xy_pos=True)
+                            f = open(log_dirs + '/xy_pos_best.txt', 'wb')
+                            pickle.dump(xy_pos, f)
+                            f.close()
+                    if args.start_train:
+                        wandb.log({'iter_{}/g/eval'.format(iteration): reward})
+                        wandb.log({'best_reward': best_reward})
+                        if args.eval_type == 'mujoco':
+                            wandb.log({'iter_{}/g/err_mean'.format(iteration): xy_err_rec.err_mean,
+                                       'iter_{}/g/err_var'.format(iteration): xy_err_rec.err_var,
+                                       'iter_{}/g/err_max'.format(iteration): xy_err_rec.err_max}
+                                      )
+                    xy_err_rec.reset()
+                    eval_display = '\n G part iteration {} best_reward:{:.1f}  cur_reward:{:.1f}'.format(iteration,
+                                                                                                         best_reward,
+                                                                                                         reward)
+                    print(eval_display)
+
+            args.init_start = False
+            args.lr_Gx = 1e-4
+            args.lr_Ax = 1e-4
+            model.update(args)
+            end_id = 0
+            start_id = end_id
+            end_id = start_id + args.pair_n
+            print('update A phase')
+            for batch_id in range(start_id, end_id):
+                item = data_agent.sample()
+                data1, data2 = item
+                model.set_input(item)
+                model.optimize_parameters()
+                # real, fake = model.fetch()
+
+                if (batch_id + 1) % args.display_gap == 0:
+                    display = '\n===> Batch[{}/{}]'.format(batch_id + 1, args.pair_n)
+                    print(display)
+                    # wandb log the loss
+                    new_loss_dict = {}
+                    errs = model.get_current_errors()
+                    for k, v in errs.items():
+                        k_ = 'iter_{}/a/{}'.format(iteration, k)
+                        new_loss_dict[k_] = v
+                    if args.start_train:
+                        wandb.log(new_loss_dict)
+
+                    model.visual()
+
+                if (batch_id + 1) % args.eval_gap == 0:
+                    reward = model.cross_policy.eval_policy(
+                        gxmodel=model.netG_2to1,
+                        axmodel=model.net_action_G_1to2,
+                        eval_episodes=args.eval_n,
+                        err_rec=xy_err_rec)
+                    if reward > best_reward:
+                        best_reward = reward
+                        model.save(weight_logs)
+                        if args.eval_type == 'mujoco':
+                            _, xy_pos = model.cross_policy.eval_policy(
+                                gxmodel=model.netG_2to1,
+                                axmodel=model.net_action_G_1to2,
+                                eval_episodes=1,
+                                return_xy_pos=True,
+                            )
+                            f = open(log_dirs + '/xy_pos_best.txt', 'wb')
+                            pickle.dump(xy_pos, f)
+                            f.close()
+
+                    if args.start_train:
+                        wandb.log({'iter_{}/a/eval'.format(iteration): reward})
+                        wandb.log({'best_reward': best_reward})
+                        if args.eval_type == 'mujoco':
+                            wandb.log({'iter_{}/a/err_mean'.format(iteration): xy_err_rec.err_mean,
+                                       'iter_{}/a/err_var'.format(iteration): xy_err_rec.err_var,
+                                       'iter_{}/a/err_max'.format(iteration): xy_err_rec.err_max}
+                                      )
+
+                    xy_err_rec.reset()
+                    eval_display = '\nA part iteration {} best_reward:{:.1f}  cur_reward:{:.1f}'.format(iteration,
+                                                                                                        best_reward,
+                                                                                                        reward)
+                    print(eval_display)
+        if args.eval_type == 'mujoco':
+            _, xy_pos = model.cross_policy.eval_policy(
+                gxmodel=model.netG_2to1,
+                axmodel=model.net_action_G_1to2,
+                eval_episodes=1,
+                return_xy_pos=True)
+            f = open(log_dirs + '/xy_pos_final.txt', 'wb')
+            pickle.dump(xy_pos, f)
+            f.close()
 
 
 if __name__ == '__main__':

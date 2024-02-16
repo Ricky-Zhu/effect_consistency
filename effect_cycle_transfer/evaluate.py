@@ -93,12 +93,58 @@ def evaluate_mapping_error(model_path, args):
     # return error_mean
 
 
+def evaluate_transferred_agent(model_path, args):
+    '''
+    fetch the target traj and the transformed traj
+    Args:
+        model_path:
+        args:
+
+    Returns:
+
+    '''
+    model = CycleGANModel(args)
+    model.load(model_path)
+    setup_seed(10)
+    avg_return = model.cross_policy.eval_policy(
+        gxmodel=model.netG_2to1,
+        axmodel=model.net_action_G_1to2,
+        eval_episodes=args.eval_n,
+        eval_type=args.eval_type,
+        render=True)
+
+    print(f'evaluate for {args.eval_n} episodes, avg return: {avg_return}')
+
+
 if __name__ == "__main__":
-    model_path = '/home/ruiqi/projects/effect_consistency/logs/cross_morphology_effect/HalfCheetah-v2_HalfCheetah_3leg-v2/exp_2023-08-17-17-14-04/weights'
     args = get_options()
-    args.env = 'HalfCheetah-v2'
-    args.target_env = 'HalfCheetah_3leg-v2'
-    args.eval_n = 2
+    ENV = 0
+    if ENV == 0:
+        model_path = '/home/ruiqi/projects/effect_consistency/logs/cross_morphology_effect/Ant-v2_Ant_5leg-v2/exp_2023-08-21-13-45-59/weights'
+        args.env = 'Ant-v2'
+        args.target_env = 'Ant_5leg-v2'
+    elif ENV == 1:
+        model_path = '/home/ruiqi/projects/effect_consistency/logs/cross_morphology_effect/HalfCheetah-v2_HalfCheetah_3leg-v2/exp_2023-08-29-15-31-34/weights'
+        args.env = 'HalfCheetah-v2'
+        args.target_env = 'HalfCheetah_3leg-v2'
+    elif ENV == 2:
+        model_path = '/home/ruiqi/projects/effect_consistency/logs/cross_morphology_effect/Swimmer-v2_Swimmer_4part-v2/exp_2023-08-11-11-38-22/weights'
+        args.env = 'Swimmer-v2'
+        args.target_env = 'Swimmer_4part-v2'
+
+    elif ENV == 3:
+        model_path = '/home/ruiqi/projects/effect_consistency/logs/cross_morphology_effect/Jaco-v2_Kinova3-v2/exp_2023-08-11-16-06-25/weights'
+        args.env = 'Jaco-v2'
+        args.target_env = 'Kinova3-v2'
+        args.eval_type = 'robot'
+
+    elif ENV == 4:
+        model_path = '/home/ruiqi/projects/effect_consistency/logs/cross_morphology_effect/UR5e-v2_Panda-v2/exp_2023-08-16-14-58-09/weights'
+        args.env = 'UR5e-v2'
+        args.target_env = 'Panda-v2'
+        args.eval_type = 'robot'
+
+    args.eval_n = 1
     args.init_start = False
     # source env information
     env_name = args.env
@@ -114,7 +160,7 @@ if __name__ == "__main__":
     args.action_dim2 = env.action_space.shape[0]
     env.close()
 
-    fetch_transformed_traj(model_path, args)
+    evaluate_transferred_agent(model_path, args)
 
     # eval_rew = []
     # for seed in [8, 10]:
