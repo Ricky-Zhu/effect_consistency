@@ -243,7 +243,8 @@ class CrossPolicy:
                     eval_type='mujoco',
                     return_error_mean=False,
                     return_trans_state=False,
-                    render=False):
+                    render=False,
+                    return_images=False):
         x_pos = []
         y_pos = []
         error_mean = []
@@ -254,6 +255,7 @@ class CrossPolicy:
         action_buffer = []
         avg_reward, new_reward = 0., 0.
         save_flag = False
+        images = []
         if eval_type == 'robot':
             err_rec = None
         if imgpath is not None:
@@ -276,8 +278,7 @@ class CrossPolicy:
             count = 0
             while not done:
                 state = np.array(state)
-                if render:
-                    eval_env.render()
+
                 trans_state, action = self.policy.select_cross_action(state, gxmodel, axmodel, return_tran_state=True)
                 if return_trans_state:
                     trans_state_buffer.append(trans_state)
@@ -287,6 +288,15 @@ class CrossPolicy:
                 state_buffer.append(state)
                 action_buffer.append(action)
                 state, reward, done, info = eval_env.step(action)
+                if render:
+                    if return_images:
+                        if eval_type == 'mujoco':
+                            img = eval_env.render(mode='rgb_array')
+                            images.append(img)
+                        elif eval_type == 'robot':
+                            images.append(info['image'])
+                    else:
+                        eval_env.render()
                 if eval_type == 'robot':
                     if info['success']:
                         success_count += 1
@@ -327,4 +337,7 @@ class CrossPolicy:
         elif return_error_mean:
             return avg_reward, error_mean
         else:
-            return avg_reward
+            if return_images:
+                return avg_reward, images
+            else:
+                return avg_reward

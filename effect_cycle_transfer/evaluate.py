@@ -15,7 +15,7 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 from trans_xy_err import error_rec
 import pandas as pd
-import pickle
+import cv2
 
 
 def setup_seed(seed):
@@ -111,7 +111,24 @@ def evaluate_transferred_agent(model_path, args):
         axmodel=model.net_action_G_1to2,
         eval_episodes=args.eval_n,
         eval_type=args.eval_type,
-        render=True)
+        render=True,
+        return_images=False)
+    # image_save_path='/home/ruiqi/projects/effect_consistency/effect_cycle_transfer/gif_logs'
+    # appendix=f'{args.env}_{args.target_env}'
+    # image_save_path = os.path.join(image_save_path,appendix)
+    # if not os.path.exists(image_save_path):
+    #     os.makedirs(image_save_path)
+    # for i in range(len(images)):
+    #     if args.eval_type=='robot':
+    #         image = np.flipud(images[i])
+    #     else:
+    #         image = images[i]
+    #     if args.eval_type=='mujoco':
+    #         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    #     image_array_uint8 = np.uint8(image)
+    #
+    #     # Save the image using OpenCV
+    #     cv2.imwrite(f'{image_save_path}/frame_{i:04d}.jpg', image_array_uint8)
 
     print(f'evaluate for {args.eval_n} episodes, avg return: {avg_return}')
 
@@ -120,7 +137,7 @@ if __name__ == "__main__":
     args = get_options()
     ENV = 0
     if ENV == 0:
-        model_path = '/home/ruiqi/projects/effect_consistency/logs/cross_morphology_effect/Ant-v2_Ant_5leg-v2/exp_2023-08-21-13-45-59/weights'
+        model_path = '/home/ruiqi/projects/effect_consistency/logs/cross_morphology_effect/Ant-v2_Ant_5leg-v2/exp_2024-02-19-18-22-15/weights'
         args.env = 'Ant-v2'
         args.target_env = 'Ant_5leg-v2'
     elif ENV == 1:

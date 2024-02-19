@@ -158,7 +158,7 @@ class Reach(SingleArmEnv):
             horizon=1000,
             ignore_done=False,
             hard_reset=True,
-            camera_names="agentview",
+            camera_names="frontview",
             camera_heights=256,
             camera_widths=256,
             camera_depths=False,
@@ -472,9 +472,10 @@ class Reach(SingleArmEnv):
 
 
 class ReachWrapper(Wrapper):
-    def __init__(self, env):
+    def __init__(self, env, img_in_info=False):
         super().__init__(env)
         self._max_episode_steps = self.env.horizon
+        self.img_in_info = img_in_info
 
     @property
     def get_observation_shape(self):
@@ -494,6 +495,8 @@ class ReachWrapper(Wrapper):
         if action.ndim > 1:
             action = action[0]
         obs, reward, done, info = self.env.step(action)
+        if self.img_in_info:
+            info['image'] = obs['frontview_image']
         return self._process_obs(obs), reward, done, info
 
     def reset(self):
@@ -504,12 +507,13 @@ class ReachWrapper(Wrapper):
         self.env.render()
 
 
-def create_robot_env(robot_name=None, gripper=False, has_renderer=True):
+def create_robot_env(robot_name=None, gripper=False, has_renderer=True, img_in_info=True):
     if gripper:
         gripper = 'default'
     else:
         gripper = None
     return ReachWrapper(
-        Reach(robots=robot_name, gripper_types=gripper, has_renderer=has_renderer, has_offscreen_renderer=False,
-              use_camera_obs=False,
-              horizon=200, reward_shaping=True))
+        Reach(robots=robot_name, gripper_types=gripper, has_renderer=has_renderer, has_offscreen_renderer=True,
+              use_camera_obs=True,
+              horizon=200, reward_shaping=True),
+        img_in_info=img_in_info)

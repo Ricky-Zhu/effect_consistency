@@ -141,6 +141,8 @@ def main(args):
             evaluations.append(eval_rew)
             np.save(os.path.join(result_path, '{}'.format(file_name)), evaluations)
             if args.save_model: policy.save(os.path.join(model_path, '{}'.format(file_name)))
+            if eval_rew>=1500.:
+                break
 
 
 if __name__ == "__main__":
